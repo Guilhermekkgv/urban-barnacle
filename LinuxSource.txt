@@ -1915,50 +1915,19 @@ end
 return success, Linux.SavedConfigs
 end
 
-function Linux.DestroyWithAnimation(callback)
-	local MainFrame = LinuxUI:FindFirstChild("MainFrame")
-	if MainFrame then
-		local tweenInfo = TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut)
-		local fadeOutTween = TweenService:Create(MainFrame, tweenInfo, {
-			BackgroundTransparency = 1,
-			Size = UDim2.new(MainFrame.Size.X.Scale * 0.8, 0, MainFrame.Size.Y.Scale * 0.8, 0)
-		})
-		for _, descendant in ipairs(MainFrame:GetDescendants()) do
-			if descendant:IsA("GuiObject") then
-				local descendantTween = TweenService:Create(descendant, tweenInfo, {
-					BackgroundTransparency = 1,
-					TextTransparency = 1,
-					ImageTransparency = 1
-				})
-				descendantTween:Play()
-			end
-		end
-		fadeOutTween:Play()
-		fadeOutTween.Completed:Connect(function()
-			if callback then
-				callback()
-			end
-		end)
-	else
-		if callback then
-			callback()
-		end
-	end
-end
-
 function Linux.Destroy()
-	Linux.SaveResizeSettings()
-	globalConnectionManager:cleanup()
-	for _, notificationData in ipairs(Linux.ActiveNotifications) do
-		if notificationData.Holder and notificationData.Holder.Parent then
-			notificationData.Holder:Destroy()
-		end
-	end
-	Linux.ActiveNotifications = {}
-	Linux.AccentElements = {}
-	Linux.CheckboxElements = {}
-	Linux.ToggleElements = {}
-	Linux.SliderElements = {}
+Linux.SaveResizeSettings()
+globalConnectionManager:cleanup()
+for _, notificationData in ipairs(Linux.ActiveNotifications) do
+if notificationData.Holder and notificationData.Holder.Parent then
+notificationData.Holder:Destroy()
+end
+end
+Linux.ActiveNotifications = {}
+Linux.AccentElements = {}
+Linux.CheckboxElements = {}
+Linux.ToggleElements = {}
+Linux.SliderElements = {}
 Linux.SectionElements = {}
 Linux.TabIconElements = {}
 Linux.SavedElements = {}
@@ -2376,8 +2345,17 @@ local MinimizeButton = Linux.Instance("ImageButton", {
 Parent = TopBar,
 BackgroundTransparency = 1,
 Size = UDim2.new(0, 16, 0, 16),
-Position = UDim2.new(1, -46, 0.5, -8),
+Position = UDim2.new(1, -66, 0.5, -8),
 Image = "rbxassetid://10734896206",
+ImageColor3 = Color3.fromRGB(180, 180, 190),
+ZIndex = 3
+})
+local ExpandButton = Linux.Instance("ImageButton", {
+Parent = TopBar,
+BackgroundTransparency = 1,
+Size = UDim2.new(0, 16, 0, 16),
+Position = UDim2.new(1, -46, 0.5, -8),
+Image = "rbxassetid://10723346553",
 ImageColor3 = Color3.fromRGB(180, 180, 190),
 ZIndex = 3
 })
@@ -2517,6 +2495,8 @@ BorderSizePixel = 1,
 BorderColor3 = Color3.fromRGB(39, 39, 42)
 })
 local minimizedSize = UDim2.new(0, uiSize.X.Offset, 0, 30)
+local isExpanded = false
+local expandedSize = UDim2.new(0, workspace.CurrentCamera.ViewportSize.X * 0.9, 0, originalSize.Y.Offset)
 globalConnectionManager:addConnection(MinimizeButton.MouseEnter:Connect(function()
 local tween = TweenService:Create(MinimizeButton, TweenInfo.new(0.2), { ImageColor3 = Color3.fromRGB(255, 255, 255) })
 globalConnectionManager:addTween(tween)
@@ -2566,6 +2546,41 @@ ResizeHandle.ImageTransparency = 1
 ResizeHandle.Active = true
 end
 end))
+globalConnectionManager:addConnection(ExpandButton.MouseEnter:Connect(function()
+local tween = TweenService:Create(ExpandButton, TweenInfo.new(0.2), { ImageColor3 = Color3.fromRGB(255, 255, 255) })
+globalConnectionManager:addTween(tween)
+tween:Play()
+end))
+globalConnectionManager:addConnection(ExpandButton.MouseLeave:Connect(function()
+local tween = TweenService:Create(ExpandButton, TweenInfo.new(0.2), { ImageColor3 = Color3.fromRGB(180, 180, 190) })
+globalConnectionManager:addTween(tween)
+tween:Play()
+end))
+globalConnectionManager:addConnection(ExpandButton.MouseButton1Click:Connect(function()
+isExpanded = not isExpanded
+if isExpanded then
+expandedSize = UDim2.new(0, workspace.CurrentCamera.ViewportSize.X * 0.9, 0, Main.Size.Y.Offset)
+local tween1 = TweenService:Create(Main, TweenInfo.new(0.3, Enum.EasingStyle.Quad), { Size = expandedSize })
+local tween2 = TweenService:Create(Shadow, TweenInfo.new(0.3, Enum.EasingStyle.Quad), {
+Size = UDim2.new(0, expandedSize.X.Offset + 120, 0, expandedSize.Y.Offset + 116)
+})
+globalConnectionManager:addTween(tween1)
+globalConnectionManager:addTween(tween2)
+tween1:Play()
+tween2:Play()
+Main.Position = UDim2.new(0.5, -expandedSize.X.Offset / 2, 0.5, -expandedSize.Y.Offset / 2)
+else
+local tween1 = TweenService:Create(Main, TweenInfo.new(0.3, Enum.EasingStyle.Quad), { Size = originalSize })
+local tween2 = TweenService:Create(Shadow, TweenInfo.new(0.3, Enum.EasingStyle.Quad), {
+Size = UDim2.new(0, originalSize.X.Offset + 120, 0, originalSize.Y.Offset + 116)
+})
+globalConnectionManager:addTween(tween1)
+globalConnectionManager:addTween(tween2)
+tween1:Play()
+tween2:Play()
+Main.Position = UDim2.new(0.5, -originalSize.X.Offset / 2, 0.5, -originalSize.Y.Offset / 2)
+end
+end))
 globalConnectionManager:addConnection(CloseButton.MouseEnter:Connect(function()
 local tween = TweenService:Create(CloseButton, TweenInfo.new(0.2), { ImageColor3 = Color3.fromRGB(255, 255, 255) })
 globalConnectionManager:addTween(tween)
@@ -2576,15 +2591,13 @@ local tween = TweenService:Create(CloseButton, TweenInfo.new(0.2), { ImageColor3
 globalConnectionManager:addTween(tween)
 tween:Play()
 end))
-	globalConnectionManager:addConnection(CloseButton.MouseButton1Click:Connect(function()
-		Linux.DestroyWithAnimation(function()
-			Linux.Destroy()
-			LinuxUI:Destroy()
-			if ToggleUI then
-				ToggleUI:Destroy()
-			end
-		end)
-	end))
+globalConnectionManager:addConnection(CloseButton.MouseButton1Click:Connect(function()
+Linux.Destroy()
+LinuxUI:Destroy()
+if ToggleUI then
+ToggleUI:Destroy()
+end
+end))
 globalConnectionManager:addConnection(InputService.InputBegan:Connect(function(input)
 if input.KeyCode == Enum.KeyCode.LeftAlt then
 LinuxUI.Enabled = not LinuxUI.Enabled
@@ -6228,38 +6241,11 @@ end
 end)
 end
 function LinuxLib.Destroy()
-	local MainFrame = LinuxUI:FindFirstChild("MainFrame")
-	if MainFrame then
-		local tweenInfo = TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut)
-		local fadeOutTween = TweenService:Create(MainFrame, tweenInfo, {
-			BackgroundTransparency = 1,
-			Size = UDim2.new(MainFrame.Size.X.Scale * 0.8, 0, MainFrame.Size.Y.Scale * 0.8, 0)
-		})
-		for _, descendant in ipairs(MainFrame:GetDescendants()) do
-			if descendant:IsA("GuiObject") then
-				local descendantTween = TweenService:Create(descendant, tweenInfo, {
-					BackgroundTransparency = 1,
-					TextTransparency = 1,
-					ImageTransparency = 1
-				})
-				descendantTween:Play()
-			end
-		end
-		fadeOutTween:Play()
-		fadeOutTween.Completed:Connect(function()
-			Linux.Destroy()
-			LinuxUI:Destroy()
-			if ToggleUI then
-				ToggleUI:Destroy()
-			end
-		end)
-	else
-		Linux.Destroy()
-		LinuxUI:Destroy()
-		if ToggleUI then
-			ToggleUI:Destroy()
-		end
-	end
+Linux.Destroy()
+LinuxUI:Destroy()
+if ToggleUI then
+ToggleUI:Destroy()
+end
 end
 return LinuxLib
 end
